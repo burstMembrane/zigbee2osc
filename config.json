@@ -1,0 +1,13 @@
+{
+  "oscHost": "0.0.0.0",
+  "broadcast": true,
+  "oscPort": 9999,
+  "verbose": true,
+  "devices": [
+    {
+      "friendly_name": "human_body_sensor",
+      "id": "0x00158d00021624b3",
+      "listen": ["occupancy", "battery", "voltage"]
+    }
+  ]
+}

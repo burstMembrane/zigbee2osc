@@ -1,0 +1,29 @@
+{
+  "name": "zigbee2osc",
+  "version": "1.0.0",
+  "description": "A zigbee2mqtt extension to send osc data from zigbee devices",
+  "main": "zigbee2osc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cd ../../ && npm start"
+  },
+  "author": "Liam Power",
+  "license": "ISC",
+  "dependencies": {
+    "osc": "^2.4.2"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burstMembrane/zigbee2osc.git"
+  },
+  "keywords": [
+    "zigbee2mqtt",
+    "osc",
+    "extension"
+  ],
+  "bugs": {
+    "url": "https://github.com/burstMembrane/zigbee2osc/issues"
+  },
+  "homepage": "https://github.com/burstMembrane/zigbee2osc#readme"
+}
