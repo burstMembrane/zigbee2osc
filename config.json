@@ -1,7 +1,8 @@
 {
+  "localPort": 9998,
   "oscHost": "0.0.0.0",
   "broadcast": true,
-  "oscPort": 9999,
+  "remotePort": 9999,
   "verbose": true,
   "devices": [
     {

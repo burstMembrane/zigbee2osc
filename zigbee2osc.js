@@ -53,13 +53,19 @@ class Zigbee2OSC {
     );
 
     this.oscPort = new osc.UDPPort({
+      localAddress: this.config.oscHost,
+      localPort: this.config.localPort,
       remoteAddress: this.config.oscHost,
-      remotePort: this.config.oscPort,
+      remotePort: this.config.remotePort,
       broadcast: this.config.broadcast,
     });
-    this.logger.info(
-      `Zigbee2OSC: Started OSC Server on ${this.config.oscHost}:${this.config.oscPort}`
-    );
+
+    this.oscPort.on("ready", () => {
+      this.logger.info(
+        `Zigbee2OSC: Started OSC Server on ${this.config.oscHost}:${this.config.remotePort}`
+      );
+    });
+
     this.oscPort.open();
 
     const oscMessage = {
@@ -91,9 +97,6 @@ class Zigbee2OSC {
     this.sendOscMessage(data, resolvedEntity);
     if (this.config.verbose) {
       // console.dir(type);
-
-      console.dir(data);
-      console.dir(resolvedEntity);
     }
   }
 
@@ -101,9 +104,10 @@ class Zigbee2OSC {
     // currently checking for specific values
     // TODO: search through data for specific keys
     // then type check their values and send as osc message
+
     if (
-      data.type == "attributeReport" &&
-      resolvedEntity.name == "human_body_sensor"
+      resolvedEntity.name == "human_body_sensor" ||
+      data.endpoint.deviceIeeeAddress == this.config.device[0].id
     ) {
       const occupancy = data.data.occupancy;
       this.logger.info(`Received occupancy data:  ${occupancy}`);
