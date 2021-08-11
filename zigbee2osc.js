@@ -25,6 +25,7 @@ class Zigbee2OSC {
     this.eventBus = eventBus;
     this.settings = settings;
     this.logger = logger;
+    this.occupancyTimer = 0;
 
     logger.info("Loading Zigbee2OSC..");
   }
@@ -96,7 +97,8 @@ class Zigbee2OSC {
     this.logger.info("Zigbee2Osc:  message received");
     this.sendOscMessage(data, resolvedEntity);
     if (this.config.verbose) {
-      // console.dir(type);
+      console.dir(data);
+      console.dir(data.endpoint.clusters.msOccupancySensing);
     }
   }
 
@@ -104,7 +106,7 @@ class Zigbee2OSC {
     // currently checking for specific values
     // TODO: search through data for specific keys
     // then type check their values and send as osc message
-
+    this.occupancyTimer && clearTimeout(this.occupancyTimer);
     if (
       resolvedEntity.name == "human_body_sensor" ||
       data.endpoint.deviceIeeeAddress == this.config.device[0].id
@@ -128,7 +130,29 @@ class Zigbee2OSC {
       );
 
       this.oscPort.send(oscMessage);
+      this.occupancyTimer = setTimeout(() => {
+        const oscMessage = {
+          address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
+          args: [
+            {
+              type: "F",
+              value: occupancy,
+            },
+          ],
+        };
+        this.logger.info(
+          `Sending OSC Message ${oscMessage.address} "
+          false"`
+        );
+        this.oscPort.send(oscMessage);
+      }, this.config.timeout * 1000);
     }
+  }
+  onMQTTMessage(topic, message) {
+    // if (topic.includes("zigbee2mqtt")) {
+    //   this.logger.info("received human_body_sensor message:");
+    //   this.logger.info(topic, message);
+    // }
   }
 
   stop() {

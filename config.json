@@ -3,7 +3,8 @@
   "oscHost": "0.0.0.0",
   "broadcast": true,
   "remotePort": 9999,
-  "verbose": true,
+  "verbose": false,
+  "timeout": 20,
   "devices": [
     {
       "friendly_name": "human_body_sensor",
