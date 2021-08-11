@@ -4,12 +4,17 @@
   "broadcast": true,
   "remotePort": 9999,
   "verbose": false,
-  "timeout": 20,
+  "timeout": 15,
   "devices": [
     {
       "friendly_name": "human_body_sensor",
       "id": "0x00158d00021624b3",
       "listen": ["occupancy", "battery", "voltage"]
+    },
+    {
+      "friendly_name": "dummy_sensor",
+      "id": "0x00158d00021624a3",
+      "listen": ["luminance", "linkquality", "voltage"]
     }
   ]
 }

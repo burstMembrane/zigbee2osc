@@ -26,8 +26,12 @@ class Zigbee2OSC {
     this.settings = settings;
     this.logger = logger;
     this.occupancyTimer = 0;
+    this.lastOccupancy;
+    this.messageTime;
+    this.lastMessageTime;
+    this.messageTimes = [];
 
-    logger.info("Loading Zigbee2OSC..");
+    logger.info("Zigbee2OSC.init: Loading Zigbee2OSC..");
   }
   async loadConfig(configPath) {
     // eslint-disable-next-line no-async-promise-executor
@@ -35,12 +39,22 @@ class Zigbee2OSC {
       try {
         const data = await fsPromises.readFile(configPath);
         const config = JSON.parse(data);
-        this.logger.info(`Zigbee2OSC: loaded config from ${configPath}`);
-        // this.logger.info(`Zigbee2OSC: devices ${config.devices.length}`);
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: loaded config from ${configPath}`
+        );
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: set occupancy timeout to ${config.timeout}s`
+        );
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: Found ${config.devices.length} in config`
+        );
+
         this.config = config;
         resolve(config);
       } catch (err) {
-        this.logger.error(`Error loading config.json ${err}`);
+        this.logger.error(
+          `Zigbee2OSC.loadConfig: Error loading config.json ${err}`
+        );
         reject(err);
       }
     });
@@ -52,7 +66,14 @@ class Zigbee2OSC {
     this.config = await this.loadConfig(
       path.join(process.cwd(), "data/extension/config.json")
     );
-
+    if (this.config.devices) {
+      // eslint-disable-next-line guard-for-in
+      this.config.devices.forEach((device) => {
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: Device Name: ${device.friendly_name} ID:  ${device.id}`
+        );
+      });
+    }
     this.oscPort = new osc.UDPPort({
       localAddress: this.config.oscHost,
       localPort: this.config.localPort,
@@ -63,7 +84,7 @@ class Zigbee2OSC {
 
     this.oscPort.on("ready", () => {
       this.logger.info(
-        `Zigbee2OSC: Started OSC Server on ${this.config.oscHost}:${this.config.remotePort}`
+        `Zigbee2OSC.onZigbeeStarted: Started OSC Server on ${this.config.oscHost}:${this.config.remotePort}`
       );
     });
 
@@ -94,7 +115,16 @@ class Zigbee2OSC {
    * @param {Object?} settingsDevice Device settings
    */
   onZigbeeEvent(type, data, resolvedEntity) {
-    this.logger.info("Zigbee2Osc:  message received");
+    this.messageTime = Date.now();
+
+    if (this.lastMessageTime) {
+      this.logger.debug(
+        `Zigbee2OSC.onZigbeeEvent: time since last message: ${
+          this.messageTime - this.lastMessageTime
+        }ms`
+      );
+    }
+    this.logger.debug("Zigbee2OSC.onZigbeeEvent:  message received");
     this.sendOscMessage(data, resolvedEntity);
     if (this.config.verbose) {
       console.dir(data);
@@ -106,13 +136,18 @@ class Zigbee2OSC {
     // currently checking for specific values
     // TODO: search through data for specific keys
     // then type check their values and send as osc message
-    this.occupancyTimer && clearTimeout(this.occupancyTimer);
+    //  XIAMO sensor sends messages about every 5 seconds if it is actively viewing movement,
+    //  otherwise it doesn't send messages at all.
     if (
       resolvedEntity.name == "human_body_sensor" ||
-      data.endpoint.deviceIeeeAddress == this.config.device[0].id
+      (data.endpoint.deviceIeeeAddress == this.config.device[0].id &&
+        data.data.occupancy !== this.lastOccupancy)
     ) {
+      this.occupancyTimer && clearTimeout(this.occupancyTimer);
       const occupancy = data.data.occupancy;
-      this.logger.info(`Received occupancy data:  ${occupancy}`);
+      this.logger.debug(
+        `Zigbee2OSC.sendOscMessage: Received occupancy data:  ${occupancy}`
+      );
 
       const oscMessage = {
         address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
@@ -124,12 +159,13 @@ class Zigbee2OSC {
         ],
       };
       this.logger.info(
-        `Sending OSC Message ${oscMessage.address} "${
-          occupancy ? true : false
-        }"`
+        `Zigbee2OSC.sendOscMessage: Sending OSC Message ${
+          oscMessage.address
+        } "${occupancy ? true : false}"`
       );
 
       this.oscPort.send(oscMessage);
+      this.lastOccupancy = occupancy;
       this.occupancyTimer = setTimeout(() => {
         const oscMessage = {
           address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
@@ -141,11 +177,11 @@ class Zigbee2OSC {
           ],
         };
         this.logger.info(
-          `Sending OSC Message ${oscMessage.address} "
-          false"`
+          `Zigbee2OSC.sendOscMessage: Sending OSC Message ${oscMessage.address} "false"`
         );
         this.oscPort.send(oscMessage);
       }, this.config.timeout * 1000);
+      this.lastMessageTime = Date.now();
     }
   }
   onMQTTMessage(topic, message) {
@@ -165,8 +201,10 @@ class Zigbee2OSC {
         },
       ],
     };
+
     this.oscPort.send(oscMessage);
     this.oscPort.close();
+    this.logger.info("Zigbee2OSC.stop: Closing OSC Port");
     this.eventBus.removeListenersExtension(this.constructor.name);
   }
 }
