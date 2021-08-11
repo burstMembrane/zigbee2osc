@@ -1,8 +1,8 @@
 {
-  "oscHost": "0.0.0.0",
-  "broadcast": true,
+  "oscHost": "localhost",
+  "broadcast": false,
   "oscPort": 9999,
-  "verbose": true,
+  "verbose": false,
   "devices": [
     {
       "friendly_name": "human_body_sensor",

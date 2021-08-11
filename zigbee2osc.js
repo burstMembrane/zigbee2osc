@@ -25,6 +25,7 @@ class Zigbee2OSC {
     this.eventBus = eventBus;
     this.settings = settings;
     this.logger = logger;
+    this.oscReady = false;
 
     logger.info("Loading Zigbee2OSC..");
   }
@@ -57,9 +58,14 @@ class Zigbee2OSC {
       remotePort: this.config.oscPort,
       broadcast: this.config.broadcast,
     });
-    this.logger.info(
-      `Zigbee2OSC: Started OSC Server on ${this.config.oscHost}:${this.config.oscPort}`
-    );
+    this.oscPort.on("ready", ()=>{
+      this.logger.info(
+        `Zigbee2OSC: Started OSC Server on ${this.config.oscHost}:${this.config.oscPort}`
+      );
+     
+      this.oscReady = true;
+    });
+  
     this.oscPort.open();
 
     const oscMessage = {
@@ -88,6 +94,7 @@ class Zigbee2OSC {
    */
   onZigbeeEvent(type, data, resolvedEntity) {
     this.logger.info("Zigbee2Osc:  message received");
+    if(this.oscReady)
     this.sendOscMessage(data, resolvedEntity);
     if (this.config.verbose) {
       // console.dir(type);
@@ -122,7 +129,7 @@ class Zigbee2OSC {
           occupancy ? true : false
         }"`
       );
-
+      
       this.oscPort.send(oscMessage);
     }
   }
