@@ -152,11 +152,17 @@ class Zigbee2OSC {
     return foundDevice;
   }
 
+  /**
+   * Is called when a Zigbee message from a device is received.
+   * Currently sends a OSC message when a Zigbee message is received from a xiaomi aqara
+   * @param {Object} data Data of the Zigbee message
+   * @param {Object?} resolvedEntity Resolved entity returned from this.zigbee.resolveEntity()
+   */
   sendOscMessage(data, resolvedEntity) {
     // currently checking for specific values
     // TODO: search through data for specific keys
     // then type check their values and send as osc message
-    //  XIAMO sensor sends messages about every 5 seconds if it is actively viewing movement,
+    //  XIAOMI sensor sends messages about every 5 seconds if it is actively viewing movement,
     //  otherwise it doesn't send messages at all.
     // if we havent found the
     if (!this.foundDevice) {
@@ -224,7 +230,6 @@ class Zigbee2OSC {
         },
       ],
     };
-
     this.oscPort.send(oscMessage);
     this.oscPort.close();
     this.logger.info("Zigbee2OSC.stop: Closing OSC Port");
