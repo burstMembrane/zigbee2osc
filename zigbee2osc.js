@@ -129,7 +129,6 @@ class Zigbee2OSC {
     this.sendOscMessage(data, resolvedEntity);
     if (this.config.verbose) {
       // console.dir(data.endpoint.deviceIeeeAddress);
-      
     }
   }
   /**
@@ -137,15 +136,13 @@ class Zigbee2OSC {
    * @param {string} id The id to search for in config.json
    * @return {bool} foundDevice true if device was found, false if device not found
    */
-  findDeviceByID(id)
-  {
+  findDeviceByID(id) {
     this.logger.info(
       `Zigbee2OSC.findDeviceByID: Searching for devices with id:  ${id}`
     );
     let foundDevice = false;
-    for (const deviceIndex in this.config.devices){
-      if (this.config.devices[deviceIndex].id == id)
-      {
+    for (const deviceIndex in this.config.devices) {
+      if (this.config.devices[deviceIndex].id == id) {
         this.logger.info(
           `Zigbee2OSC.findDeviceByID: Found device with id:  ${id}`
         );
@@ -162,11 +159,12 @@ class Zigbee2OSC {
     //  XIAMO sensor sends messages about every 5 seconds if it is actively viewing movement,
     //  otherwise it doesn't send messages at all.
     // if we havent found the
-    if(!this.foundDevice)
+    if (!this.foundDevice) {
       this.foundDevice = this.findDeviceByID(data.endpoint.deviceIeeeAddress);
+    }
     if (
-      resolvedEntity.name == "human_body_sensor" || this.foundDevice && 
-        data.data.occupancy !== this.lastOccupancy
+      resolvedEntity.name == "human_body_sensor" ||
+      (this.foundDevice && data.data.occupancy !== this.lastOccupancy)
     ) {
       this.occupancyTimer && clearTimeout(this.occupancyTimer);
       const occupancy = data.data.occupancy;
@@ -188,7 +186,7 @@ class Zigbee2OSC {
           oscMessage.address
         } "${occupancy ? true : false}"`
       );
-      
+
       this.oscPort.send(oscMessage);
       this.lastOccupancy = occupancy;
       this.occupancyTimer = setTimeout(() => {
