@@ -1,13 +1,20 @@
 {
-  "oscHost": "localhost",
-  "broadcast": false,
-  "oscPort": 9999,
-  "verbose": false,
+  "localPort": 9998,
+  "oscHost": "0.0.0.0",
+  "broadcast": true,
+  "remotePort": 9999,
+  "verbose": true,
+  "timeout": 15,
   "devices": [
     {
       "friendly_name": "human_body_sensor",
       "id": "0x00158d00021624b3",
       "listen": ["occupancy", "battery", "voltage"]
+    },
+    {
+      "friendly_name": "dummy_sensor",
+      "id": "0x00158d00021624a3",
+      "listen": ["luminance", "linkquality", "voltage"]
     }
   ]
 }

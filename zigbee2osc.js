@@ -25,9 +25,14 @@ class Zigbee2OSC {
     this.eventBus = eventBus;
     this.settings = settings;
     this.logger = logger;
-    this.oscReady = false;
+    this.occupancyTimer = 0;
+    this.lastOccupancy;
+    this.messageTime;
+    this.lastMessageTime;
+    this.messageTimes = [];
+    this.foundDevice = false;
 
-    logger.info("Loading Zigbee2OSC..");
+    logger.info("Zigbee2OSC.init: Loading Zigbee2OSC..");
   }
   async loadConfig(configPath) {
     // eslint-disable-next-line no-async-promise-executor
@@ -35,12 +40,22 @@ class Zigbee2OSC {
       try {
         const data = await fsPromises.readFile(configPath);
         const config = JSON.parse(data);
-        this.logger.info(`Zigbee2OSC: loaded config from ${configPath}`);
-        // this.logger.info(`Zigbee2OSC: devices ${config.devices.length}`);
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: loaded config from ${configPath}`
+        );
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: set occupancy timeout to ${config.timeout}s`
+        );
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: Found ${config.devices.length} in config`
+        );
+
         this.config = config;
         resolve(config);
       } catch (err) {
-        this.logger.error(`Error loading config.json ${err}`);
+        this.logger.error(
+          `Zigbee2OSC.loadConfig: Error loading config.json ${err}`
+        );
         reject(err);
       }
     });
@@ -52,20 +67,28 @@ class Zigbee2OSC {
     this.config = await this.loadConfig(
       path.join(process.cwd(), "data/extension/config.json")
     );
-
+    if (this.config.devices) {
+      // eslint-disable-next-line guard-for-in
+      this.config.devices.forEach((device) => {
+        this.logger.info(
+          `Zigbee2OSC.loadConfig: Device Name: ${device.friendly_name} ID:  ${device.id}`
+        );
+      });
+    }
     this.oscPort = new osc.UDPPort({
+      localAddress: this.config.oscHost,
+      localPort: this.config.localPort,
       remoteAddress: this.config.oscHost,
-      remotePort: this.config.oscPort,
+      remotePort: this.config.remotePort,
       broadcast: this.config.broadcast,
     });
-    this.oscPort.on("ready", ()=>{
+
+    this.oscPort.on("ready", () => {
       this.logger.info(
-        `Zigbee2OSC: Started OSC Server on ${this.config.oscHost}:${this.config.oscPort}`
+        `Zigbee2OSC.onZigbeeStarted: Started OSC Server on ${this.config.oscHost}:${this.config.remotePort}`
       );
-     
-      this.oscReady = true;
     });
-  
+
     this.oscPort.open();
 
     const oscMessage = {
@@ -93,27 +116,63 @@ class Zigbee2OSC {
    * @param {Object?} settingsDevice Device settings
    */
   onZigbeeEvent(type, data, resolvedEntity) {
-    this.logger.info("Zigbee2Osc:  message received");
-    if(this.oscReady)
+    this.messageTime = Date.now();
+
+    if (this.lastMessageTime) {
+      this.logger.debug(
+        `Zigbee2OSC.onZigbeeEvent: time since last message: ${
+          this.messageTime - this.lastMessageTime
+        }ms`
+      );
+    }
+    this.logger.debug("Zigbee2OSC.onZigbeeEvent:  message received");
     this.sendOscMessage(data, resolvedEntity);
     if (this.config.verbose) {
-      // console.dir(type);
-
-      console.dir(data);
-      console.dir(resolvedEntity);
+      // console.dir(data.endpoint.deviceIeeeAddress);
+      
     }
+  }
+  /**
+   * Searches for a match between the devices in the config and the id of the received Zigbee message
+   * @param {string} id The id to search for in config.json
+   * @return {bool} foundDevice true if device was found, false if device not found
+   */
+  findDeviceByID(id)
+  {
+    this.logger.info(
+      `Zigbee2OSC.findDeviceByID: Searching for devices with id:  ${id}`
+    );
+    let foundDevice = false;
+    for (const deviceIndex in this.config.devices){
+      if (this.config.devices[deviceIndex].id == id)
+      {
+        this.logger.info(
+          `Zigbee2OSC.findDeviceByID: Found device with id:  ${id}`
+        );
+        foundDevice = true;
+      }
+    }
+    return foundDevice;
   }
 
   sendOscMessage(data, resolvedEntity) {
     // currently checking for specific values
     // TODO: search through data for specific keys
     // then type check their values and send as osc message
+    //  XIAMO sensor sends messages about every 5 seconds if it is actively viewing movement,
+    //  otherwise it doesn't send messages at all.
+    // if we havent found the
+    if(!this.foundDevice)
+      this.foundDevice = this.findDeviceByID(data.endpoint.deviceIeeeAddress);
     if (
-      data.type == "attributeReport" &&
-      resolvedEntity.name == "human_body_sensor"
+      resolvedEntity.name == "human_body_sensor" || this.foundDevice && 
+        data.data.occupancy !== this.lastOccupancy
     ) {
+      this.occupancyTimer && clearTimeout(this.occupancyTimer);
       const occupancy = data.data.occupancy;
-      this.logger.info(`Received occupancy data:  ${occupancy}`);
+      this.logger.debug(
+        `Zigbee2OSC.sendOscMessage: Received occupancy data:  ${occupancy}`
+      );
 
       const oscMessage = {
         address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
@@ -125,13 +184,36 @@ class Zigbee2OSC {
         ],
       };
       this.logger.info(
-        `Sending OSC Message ${oscMessage.address} "${
-          occupancy ? true : false
-        }"`
+        `Zigbee2OSC.sendOscMessage: Sending OSC Message ${
+          oscMessage.address
+        } "${occupancy ? true : false}"`
       );
       
       this.oscPort.send(oscMessage);
+      this.lastOccupancy = occupancy;
+      this.occupancyTimer = setTimeout(() => {
+        const oscMessage = {
+          address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
+          args: [
+            {
+              type: "F",
+              value: occupancy,
+            },
+          ],
+        };
+        this.logger.info(
+          `Zigbee2OSC.sendOscMessage: Sending OSC Message ${oscMessage.address} "false"`
+        );
+        this.oscPort.send(oscMessage);
+      }, this.config.timeout * 1000);
+      this.lastMessageTime = Date.now();
     }
+  }
+  onMQTTMessage(topic, message) {
+    // if (topic.includes("zigbee2mqtt")) {
+    //   this.logger.info("received human_body_sensor message:");
+    //   this.logger.info(topic, message);
+    // }
   }
 
   stop() {
@@ -144,8 +226,10 @@ class Zigbee2OSC {
         },
       ],
     };
+
     this.oscPort.send(oscMessage);
     this.oscPort.close();
+    this.logger.info("Zigbee2OSC.stop: Closing OSC Port");
     this.eventBus.removeListenersExtension(this.constructor.name);
   }
 }
