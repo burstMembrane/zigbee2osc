@@ -104,11 +104,6 @@ class Zigbee2OSC {
   }
 
   /**
-   * This method is called by the controller once connected to the MQTT server.
-   */
-  onMQTTConnected() {}
-
-  /**
    * Is called when a Zigbee message from a device is received.
    * @param {string} type Type of the message
    * @param {Object} data Data of the message
@@ -127,9 +122,6 @@ class Zigbee2OSC {
     }
     this.logger.debug("Zigbee2OSC.onZigbeeEvent:  message received");
     this.sendOscMessage(data, resolvedEntity);
-    if (this.config.verbose) {
-      // console.dir(data.endpoint.deviceIeeeAddress);
-    }
   }
   /**
    * Searches for a match between the devices in the config and the id of the received Zigbee message
@@ -192,7 +184,6 @@ class Zigbee2OSC {
           oscMessage.address
         } "${occupancy ? true : false}"`
       );
-
       this.oscPort.send(oscMessage);
       this.lastOccupancy = occupancy;
       this.occupancyTimer = setTimeout(() => {
@@ -212,12 +203,6 @@ class Zigbee2OSC {
       }, this.config.timeout * 1000);
       this.lastMessageTime = Date.now();
     }
-  }
-  onMQTTMessage(topic, message) {
-    // if (topic.includes("zigbee2mqtt")) {
-    //   this.logger.info("received human_body_sensor message:");
-    //   this.logger.info(topic, message);
-    // }
   }
 
   stop() {
