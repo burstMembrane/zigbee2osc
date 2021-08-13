@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-spacing */
 /* eslint-disable comma-dangle */
 /* eslint-disable quotes */
 /* eslint-disable indent */
@@ -93,12 +94,7 @@ class Zigbee2OSC {
 
     const oscMessage = {
       address: "/zigbee2osc",
-      args: [
-        {
-          type: "s",
-          value: "started",
-        },
-      ],
+      args: [{ type: "s", value: "started" }],
     };
     this.oscPort.send(oscMessage);
   }
@@ -172,12 +168,7 @@ class Zigbee2OSC {
 
       const oscMessage = {
         address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
-        args: [
-          {
-            type: occupancy == 1 ? "T" : "F",
-            value: occupancy,
-          },
-        ],
+        args: [{ type: occupancy == 1 ? "T" : "F", value: occupancy }],
       };
       this.logger.info(
         `Zigbee2OSC.sendOscMessage: Sending OSC Message ${
@@ -189,12 +180,7 @@ class Zigbee2OSC {
       this.occupancyTimer = setTimeout(() => {
         const oscMessage = {
           address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
-          args: [
-            {
-              type: "F",
-              value: occupancy,
-            },
-          ],
+          args: [{ type: "F", value: occupancy }],
         };
         this.logger.info(
           `Zigbee2OSC.sendOscMessage: Sending OSC Message ${oscMessage.address} "false"`
@@ -208,12 +194,7 @@ class Zigbee2OSC {
   stop() {
     const oscMessage = {
       address: "/zigbee2osc",
-      args: [
-        {
-          type: "s",
-          value: "stopped",
-        },
-      ],
+      args: [{ type: "s", value: "stopped" }],
     };
     this.oscPort.send(oscMessage);
     this.oscPort.close();
