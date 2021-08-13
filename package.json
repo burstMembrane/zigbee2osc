@@ -4,7 +4,6 @@
   "description": "A zigbee2mqtt extension to send osc data from zigbee devices",
   "main": "zigbee2osc.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "cd ../../ && npm start",
     "install": "cd ../../ && npm install --prefix . data/extension/"
   },
