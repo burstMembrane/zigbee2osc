@@ -2,7 +2,7 @@
   "name": "zigbee2osc",
   "version": "1.0.0",
   "description": "A zigbee2mqtt extension to send osc data from zigbee devices",
-  "main": "zigbee2osc.js",
+  "main": "../../index.js",
   "scripts": {
     "start": "cd ../../ && npm start",
     "install": "cd ../../ && npm install --prefix . data/extension/"
@@ -10,7 +10,6 @@
   "author": "Liam Power",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.1",
     "osc": "^2.4.2",
     "zigbee2mqtt": "file:../.."
   },
