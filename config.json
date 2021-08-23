@@ -7,14 +7,14 @@
   "timeout": 15,
   "devices": [
     {
-      "friendly_name": "human_body_sensor",
-      "id": "0x00158d00021624b3",
-      "listen": ["occupancy", "battery", "voltage"]
+      "friendly_name": "sonoff_body_sensor",
+      "id": "0x00124b0023ad8d55",
+      "listen": ["occupancy", "linkquality", "voltage"]
     },
     {
-      "friendly_name": "dummy_sensor",
-      "id": "0x00158d00021624a3",
-      "listen": ["luminance", "linkquality", "voltage"]
+      "friendly_name": "human_body_sensor",
+      "id": "0x00158d00021624b3",
+      "listen": ["occupancy", "linkquality", "voltage"]
     }
   ]
 }

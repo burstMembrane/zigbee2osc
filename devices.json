@@ -1,0 +1,246 @@
+[
+  {
+    "definition": null,
+    "endpoints": {
+      "1": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "10": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "11": {
+        "bindings": [],
+        "clusters": {
+          "input": ["ssIasAce"],
+          "output": ["ssIasZone", "ssIasWd"]
+        },
+        "configured_reportings": []
+      },
+      "110": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "12": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "13": {
+        "bindings": [],
+        "clusters": { "input": ["genOta"], "output": [] },
+        "configured_reportings": []
+      },
+      "2": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "242": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "3": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "4": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "47": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "5": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "6": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      },
+      "8": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      }
+    },
+    "friendly_name": "Coordinator",
+    "ieee_address": "0x00124b000ffb78e4",
+    "interview_completed": true,
+    "interviewing": false,
+    "network_address": 0,
+    "supported": false,
+    "type": "Coordinator"
+  },
+  {
+    "definition": {
+      "description": "MiJia human body movement sensor",
+      "exposes": [
+        {
+          "access": 1,
+          "description": "Remaining battery in %",
+          "name": "battery",
+          "property": "battery",
+          "type": "numeric",
+          "unit": "%",
+          "value_max": 100,
+          "value_min": 0
+        },
+        {
+          "access": 1,
+          "description": "Indicates whether the device detected occupancy",
+          "name": "occupancy",
+          "property": "occupancy",
+          "type": "binary",
+          "value_off": false,
+          "value_on": true
+        },
+        {
+          "access": 1,
+          "description": "Voltage of the battery in millivolts",
+          "name": "voltage",
+          "property": "voltage",
+          "type": "numeric",
+          "unit": "mV"
+        },
+        {
+          "access": 1,
+          "description": "Link quality (signal strength)",
+          "name": "linkquality",
+          "property": "linkquality",
+          "type": "numeric",
+          "unit": "lqi",
+          "value_max": 255,
+          "value_min": 0
+        }
+      ],
+      "model": "RTCGQ01LM",
+      "supports_ota": false,
+      "vendor": "Xiaomi"
+    },
+    "endpoints": {
+      "1": {
+        "bindings": [],
+        "clusters": { "input": [], "output": [] },
+        "configured_reportings": []
+      }
+    },
+    "friendly_name": "human_body_sensor",
+    "ieee_address": "0x00158d00021624b3",
+    "interview_completed": true,
+    "interviewing": false,
+    "manufacturer": "LUMI",
+    "model_id": "lumi.sensor_motion",
+    "network_address": 8650,
+    "power_source": "Battery",
+    "supported": true,
+    "type": "EndDevice"
+  },
+  {
+    "date_code": "20210125",
+    "definition": {
+      "description": "Motion sensor",
+      "exposes": [
+        {
+          "access": 1,
+          "description": "Indicates whether the device detected occupancy",
+          "name": "occupancy",
+          "property": "occupancy",
+          "type": "binary",
+          "value_off": false,
+          "value_on": true
+        },
+        {
+          "access": 1,
+          "description": "Indicates if the battery of this device is almost empty",
+          "name": "battery_low",
+          "property": "battery_low",
+          "type": "binary",
+          "value_off": false,
+          "value_on": true
+        },
+        {
+          "access": 1,
+          "description": "Indicates whether the device is tampered",
+          "name": "tamper",
+          "property": "tamper",
+          "type": "binary",
+          "value_off": false,
+          "value_on": true
+        },
+        {
+          "access": 1,
+          "description": "Remaining battery in %",
+          "name": "battery",
+          "property": "battery",
+          "type": "numeric",
+          "unit": "%",
+          "value_max": 100,
+          "value_min": 0
+        },
+        {
+          "access": 1,
+          "description": "Link quality (signal strength)",
+          "name": "linkquality",
+          "property": "linkquality",
+          "type": "numeric",
+          "unit": "lqi",
+          "value_max": 255,
+          "value_min": 0
+        }
+      ],
+      "model": "SNZB-03",
+      "supports_ota": false,
+      "vendor": "SONOFF"
+    },
+    "endpoints": {
+      "1": {
+        "bindings": [
+          {
+            "cluster": "genPowerCfg",
+            "target": {
+              "endpoint": 1,
+              "ieee_address": "0x00124b000ffb78e4",
+              "type": "endpoint"
+            }
+          }
+        ],
+        "clusters": {
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
+        },
+        "configured_reportings": [
+          {
+            "attribute": "batteryVoltage",
+            "cluster": "genPowerCfg",
+            "maximum_report_interval": 62000,
+            "minimum_report_interval": 3600,
+            "reportable_change": 0
+          }
+        ]
+      }
+    },
+    "friendly_name": "sonoff_body_sensor",
+    "ieee_address": "0x00124b0023ad8d55",
+    "interview_completed": true,
+    "interviewing": false,
+    "manufacturer": "eWeLink",
+    "model_id": "MS01",
+    "network_address": 56185,
+    "power_source": "Battery",
+    "supported": true,
+    "type": "EndDevice"
+  }
+]

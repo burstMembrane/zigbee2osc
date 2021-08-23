@@ -107,6 +107,10 @@ class Zigbee2OSC {
    * @param {Object?} settingsDevice Device settings
    */
   onZigbeeEvent(type, data, resolvedEntity) {
+    if (type === "deviceJoined" && resolvedEntity) {
+      this.lastJoinedDeviceIeeeAddr = resolvedEntity.device.ieeeAddr;
+    }
+
     this.messageTime = Date.now();
 
     if (this.lastMessageTime) {
@@ -116,28 +120,40 @@ class Zigbee2OSC {
         }ms`
       );
     }
-    this.logger.debug("Zigbee2OSC.onZigbeeEvent:  message received");
-    this.sendOscMessage(data, resolvedEntity);
+
+    if (type == "message") {
+      if (data.type == "attributeReport") {
+        if (Object.keys(data).find((str) => str == "data")) {
+          if (Object.keys(data.data).find((str) => str == "occupancy")) {
+            this.sendOscMessage(data, resolvedEntity);
+          }
+        }
+      }
+    }
+
+    // console.dir(resolvedEntity);
+    // if (data.device.deviceIeeeAddress)
+    //   this.sendOscMessage(data, resolvedEntity);
   }
   /**
    * Searches for a match between the devices in the config and the id of the received Zigbee message
    * @param {string} id The id to search for in config.json
    * @return {bool} foundDevice true if device was found, false if device not found
    */
-  findDeviceByID(id) {
+  findDevices(id) {
     this.logger.info(
       `Zigbee2OSC.findDeviceByID: Searching for devices with id:  ${id}`
     );
-    let foundDevice = false;
+    const foundDevices = [];
     for (const deviceIndex in this.config.devices) {
       if (this.config.devices[deviceIndex].id == id) {
         this.logger.info(
           `Zigbee2OSC.findDeviceByID: Found device with id:  ${id}`
         );
-        foundDevice = true;
+        foundDevices.push(this.config.devices[deviceIndex]);
       }
     }
-    return foundDevice;
+    return foundDevices;
   }
 
   /**
@@ -152,23 +168,42 @@ class Zigbee2OSC {
     // then type check their values and send as osc message
     //  XIAOMI sensor sends messages about every 5 seconds if it is actively viewing movement,
     //  otherwise it doesn't send messages at all.
-    // if we havent found the
+
     if (!this.foundDevice) {
-      this.foundDevice = this.findDeviceByID(data.endpoint.deviceIeeeAddress);
+      const deviceId = data.device ? data.device.ieeeAddr : data.ieeeAddr;
+      this.foundDevices = this.findDevices(deviceId);
+
+      const ids = this.foundDevices.map((device) => device.id);
+      console.log(ids);
+      if (ids.find((id) => id === deviceId)) {
+        this.handleXiaomi(data, resolvedEntity);
+      }
     }
+  }
+  onMQTTMessage(topic, message) {
+    if (!topic.includes("zigbee2mqtt/bridge/")) {
+      this.logger.info(`Zigbee2OSC.onMQTTMessage: MQTT Topic: ${topic}`);
+      this.logger.info(`Zigbee2OSC.onMQTTMessage: MQTT Message: ${message}`);
+    }
+  }
+
+  handleXiaomi(data, resolvedEntity) {
+    console.log(resolvedEntity.name);
+    const ieeeAddress = data.device ? data.device.ieeeAddr : data.ieeeAddr;
     if (
-      resolvedEntity.name == "human_body_sensor" ||
-      (this.foundDevice && data.data.occupancy !== this.lastOccupancy)
+      this.config.devices.find(
+        (device) => device.friendly_name == resolvedEntity.name
+      ) ||
+      (this.foundDevices && data.data.occupancy !== this.lastOccupancy)
     ) {
       this.occupancyTimer && clearTimeout(this.occupancyTimer);
       const occupancy = data.data.occupancy;
       this.logger.debug(
         `Zigbee2OSC.sendOscMessage: Received occupancy data:  ${occupancy}`
       );
-
       const oscMessage = {
         address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
-        args: [{ type: occupancy == 1 ? "T" : "F", value: occupancy }],
+        args: [{ type: "T", value: occupancy ? true : false }],
       };
       this.logger.info(
         `Zigbee2OSC.sendOscMessage: Sending OSC Message ${
@@ -180,7 +215,7 @@ class Zigbee2OSC {
       this.occupancyTimer = setTimeout(() => {
         const oscMessage = {
           address: `/zigbee2osc/${resolvedEntity.name}/occupancy`,
-          args: [{ type: "F", value: occupancy }],
+          args: [{ type: "F", value: occupancy ? true : false }],
         };
         this.logger.info(
           `Zigbee2OSC.sendOscMessage: Sending OSC Message ${oscMessage.address} "false"`
